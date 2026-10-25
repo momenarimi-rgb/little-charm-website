@@ -36,6 +36,8 @@ section{max-width:1100px;margin:auto;padding:34px 18px}.section-head{text-align:
 form{display:grid;gap:12px}label{font-size:.9rem;font-weight:650}input,select,textarea{width:100%;margin-top:5px;padding:12px 13px;border:1px solid #e9cbd8;border-radius:12px;background:#fffafd;color:var(--ink);font:inherit}textarea{min-height:90px;resize:vertical}.formhint{font-size:.83rem;color:var(--muted)}
 footer{margin-top:36px;background:#fff0f5;text-align:center;padding:26px 18px;color:#806875}footer strong{font-family:Georgia,serif;font-size:1.3rem;color:var(--deep)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#492b38;color:white;padding:11px 16px;border-radius:12px;display:none;max-width:90vw;z-index:20}
+#toast.error{background:#8d263f}
+button:disabled{opacity:.65;cursor:wait}
 @media(max-width:720px){.nav{padding:10px 14px}.logo{font-size:1.4rem}.navlinks{gap:10px;font-size:.83rem}.hero{grid-template-columns:1fr;padding-top:28px;gap:20px}.hero-art{min-height:245px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.product-visual{height:145px;font-size:4rem}.product-body{padding:12px}.product-bottom{align-items:flex-start;flex-direction:column}.small-btn{width:100%}.about{grid-template-columns:1fr;text-align:center;gap:5px}.about-icon{font-size:3.7rem}section{padding-top:26px;padding-bottom:26px}}
 @media(max-width:390px){.navlinks{gap:7px;font-size:.77rem}.grid{gap:9px}.product-visual{height:125px;font-size:3.5rem}.product h3{font-size:.95rem}}
 </style>
@@ -71,27 +73,100 @@ footer{margin-top:36px;background:#fff0f5;text-align:center;padding:26px 18px;co
 <section id="about"><div class="about"><div class="about-icon">🌷💗</div><div><h2>আমাদের ছোট্ট গল্প</h2><p>Little Charm হলো হাতে তৈরি ছোট্ট ছোট্ট আনন্দের জায়গা। প্রতিটি চার্ম যত্ন করে বানানোর স্বপ্ন নিয়ে এই পথচলা। তোমার পছন্দের রং বা ডিজাইন থাকলে কাস্টম অর্ডারের জন্য জানাও!</p></div></div></section>
 <section id="order"><div class="order"><h2>তোমার অর্ডার পাঠাও ♡</h2>
 <form id="orderForm">
-<div><label for="customer">তোমার নাম</label><input id="customer" name="customer" required placeholder="নাম লিখো"></div>
+<div><label for="customer">তোমার নাম</label><input id="customer" name="customer" required placeholder="নাম লিখো" autocomplete="name"></div>
 <div><label for="product">কোন পণ্যটি চাও?</label><select id="product" name="product" required><option value="">পণ্য বেছে নাও</option><option>স্ট্রবেরি চার্ম</option><option>কিউট টেডি চার্ম</option><option>বো চার্ম</option><option>ফ্লাওয়ার চার্ম</option><option>হার্ট চার্ম</option><option>কাস্টম চার্ম</option></select></div>
 <div><label for="quantity">পরিমাণ</label><select id="quantity" name="quantity"><option>১টি</option><option>২টি</option><option>৩টি</option><option>৪টি বা তার বেশি</option></select></div>
-<div><label for="contact">যোগাযোগের তথ্য (ঐচ্ছিক)</label><input id="contact" name="contact" placeholder="ফোন নম্বর বা Instagram ইউজারনেম"></div>
+<div><label for="contact">যোগাযোগের তথ্য (ঐচ্ছিক)</label><input id="contact" name="contact" placeholder="ফোন নম্বর বা Instagram ইউজারনেম" autocomplete="tel"></div>
 <div><label for="details">অতিরিক্ত পছন্দ (ঐচ্ছিক)</label><textarea id="details" name="details" placeholder="রং, কাস্টম ডিজাইন বা ডেলিভারি সম্পর্কে লিখো"></textarea></div>
-<button class="btn primary" type="submit">অর্ডারের মেসেজ তৈরি করো</button>
-<p class="formhint">এই নমুনা ফর্ম অর্ডারের মেসেজ তৈরি করবে; নিজে থেকে তথ্য কোথাও পাঠাবে না। প্রকাশের আগে নিচের কোডে নিজের WhatsApp নম্বর যোগ করলে মেসেজ WhatsApp-এ পাঠানো যাবে।</p>
+<button class="btn primary" id="submitBtn" type="submit">অর্ডার জমা দাও ♡</button>
+<p class="formhint">ফর্ম জমা দিলে অর্ডার Supabase ডেটাবেসে সংরক্ষণের চেষ্টা করবে। সফল হলে এখানে নিশ্চিত বার্তা দেখাবে।</p>
 </form></div></section>
 </main>
 <footer><strong>Little Charm ♡</strong><div>Handmade with love</div><div>Instagram: তোমার পেজের লিংক এখানে যোগ করো</div><small>© <span id="year"></span> Little Charm</small></footer>
-<div id="toast" role="status"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Supabase browser client. Publishable key is intended for browser use; database access must be protected by RLS. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.getElementById('year').textContent=new Date().getFullYear();
-function chooseProduct(name){document.getElementById('product').value=name;document.getElementById('order').scrollIntoView({behavior:'smooth'});document.getElementById('customer').focus({preventScroll:true})}
-document.getElementById('orderForm').addEventListener('submit',function(e){
- e.preventDefault();const d=new FormData(this);
- const message=`Little Charm অর্ডার\\nনাম: ${d.get('customer')}\\nপণ্য: ${d.get('product')}\\nপরিমাণ: ${d.get('quantity')}\\nযোগাযোগ: ${d.get('contact')||'দেওয়া হয়নি'}\\nঅতিরিক্ত পছন্দ: ${d.get('details')||'নেই'}`;
- // Add your WhatsApp number in international format (Bangladesh: 8801XXXXXXXXX), digits only.
- const WHATSAPP_NUMBER='';
- if(WHATSAPP_NUMBER){window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(message),'_blank','noopener')}
- else {const blob=new Blob([message],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='little-charm-order.txt';a.click();URL.revokeObjectURL(url);const t=document.getElementById('toast');t.textContent='অর্ডারের মেসেজ ফাইল তৈরি হয়েছে। WhatsApp নম্বর যোগ করলে সরাসরি পাঠানো যাবে।';t.style.display='block';setTimeout(()=>t.style.display='none',4500)}
+document.getElementById('year').textContent = new Date().getFullYear();
+
+// Project details from your Supabase project.
+// Never place a secret/service_role key in a public HTML file.
+const SUPABASE_URL = 'https://ltmuxjgedrmnrfzneqoc.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_GSMXz7mHNJEjN1stX3C2Hg_1sdTCFsI';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+function showToast(message, isError = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.toggle('error', isError);
+  toast.style.display = 'block';
+  window.clearTimeout(window.__littleCharmToastTimer);
+  window.__littleCharmToastTimer = window.setTimeout(() => {
+    toast.style.display = 'none';
+  }, 5000);
+}
+
+function chooseProduct(name) {
+  document.getElementById('product').value = name;
+  document.getElementById('order').scrollIntoView({behavior: 'smooth'});
+  document.getElementById('customer').focus({preventScroll: true});
+}
+
+document.getElementById('orderForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const form = e.currentTarget;
+  const submitButton = document.getElementById('submitBtn');
+  const data = new FormData(form);
+  const customerName = String(data.get('customer') || '').trim();
+  const productName = String(data.get('product') || '').trim();
+  const quantity = String(data.get('quantity') || '').trim();
+  const contact = String(data.get('contact') || '').trim();
+  const details = String(data.get('details') || '').trim();
+
+  if (!customerName || !productName) {
+    showToast('দয়া করে নাম ও পণ্য নির্বাচন করো।', true);
+    return;
+  }
+
+  submitButton.disabled = true;
+  submitButton.textContent = 'অর্ডার জমা হচ্ছে…';
+
+  try {
+    // These column names must match the columns in public.orders.
+    const { error } = await supabaseClient
+      .from('orders')
+      .insert([{
+        customer_name: customerName,
+        product: productName,
+        quantity: quantity,
+        phone: contact || null,
+        details: details || null
+      }]);
+
+    if (error) {
+      console.error('Supabase order insert error:', error);
+      if (error.code === '42501' || /row-level security|permission denied/i.test(error.message || '')) {
+        showToast('অর্ডার জমা হয়নি: Supabase-এর orders টেবিলে INSERT RLS policy সেট করতে হবে।', true);
+      } else if (/column .* does not exist|schema cache/i.test(error.message || '')) {
+        showToast('অর্ডার জমা হয়নি: orders টেবিলের কলামের নাম কোডের সঙ্গে মিলছে না।', true);
+      } else {
+        showToast('অর্ডার জমা হয়নি। Supabase-এর টেবিল ও API settings পরীক্ষা করো।', true);
+      }
+      return;
+    }
+
+    showToast('ধন্যবাদ! তোমার অর্ডার সফলভাবে জমা হয়েছে ♡');
+    form.reset();
+  } catch (error) {
+    console.error('Unexpected order submission error:', error);
+    showToast('সংযোগে সমস্যা হয়েছে। ইন্টারনেট পরীক্ষা করে আবার চেষ্টা করো।', true);
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = 'অর্ডার জমা দাও ♡';
+  }
 });
 </script>
-</body></html>
+</body>
+</html>
